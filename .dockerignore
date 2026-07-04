@@ -1,0 +1,33 @@
+# Build artifacts / deps — reinstalled inside the image
+node_modules
+.next
+out
+build
+dist
+
+# Local env & secrets — injected at runtime, never baked into the image
+.env
+.env.*
+!.env.local.example
+
+# VCS / tooling
+.git
+.gitignore
+.github
+.vscode
+.idea
+
+# Docker & compose (not needed in the build context)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Tests, coverage, logs
+coverage
+*.log
+npm-debug.log*
+
+# Docs & misc that don't affect the build
+*.md
+!AGENTS.md
+.DS_Store

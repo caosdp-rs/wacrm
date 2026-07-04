@@ -62,6 +62,14 @@ const SECURITY_HEADERS = [
 
 const nextConfig: NextConfig = {
   /**
+   * Emit a self-contained production build under `.next/standalone`
+   * (minimal `server.js` + only the traced `node_modules`). This is what
+   * the Docker image runs — no `next start`, no full `node_modules` in the
+   * runtime layer. See `Dockerfile`.
+   */
+  output: "standalone",
+
+  /**
    * Cache-Control policy.
    *
    * Why this exists:

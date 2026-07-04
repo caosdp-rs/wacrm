@@ -1,0 +1,63 @@
+version: "3.9"
+
+# ============================================================
+# wacrm — Docker Swarm + Traefik deploy
+#
+# Build & push the image FIRST (NEXT_PUBLIC_* are baked at build time):
+#
+#   docker build \
+#     --build-arg NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co \
+#     --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key \
+#     --build-arg NEXT_PUBLIC_SITE_URL=https://crm.spycop.com.br \
+#     -t wacrm-app:latest .
+#   # if deploying to a remote swarm, push to a registry the nodes can pull:
+#   #   docker tag wacrm-app:latest registry.example.com/wacrm-app:latest
+#   #   docker push registry.example.com/wacrm-app:latest
+#
+# Then create the runtime secrets file `.env` next to this compose
+# (server-side secrets — never baked into the image):
+#   SUPABASE_SERVICE_ROLE_KEY, ENCRYPTION_KEY, META_APP_SECRET, ...
+# and deploy:
+#   docker stack deploy -c docker-compose.yml wacrm
+# ============================================================
+
+services:
+  app:
+    image: wacrm-app:latest
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    env_file:
+      - .env   # server-side secrets + NEXT_PUBLIC_* (also read server-side)
+    networks:
+      - private
+      - public
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      update_config:
+        parallelism: 1
+        order: stop-first
+        failure_action: pause
+        monitor: 5s
+      rollback_config:
+        parallelism: 1
+        order: stop-first
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.wacrm-app.entrypoints=websecure"
+        - "traefik.http.routers.wacrm-app.rule=Host(`crm.spycop.com.br`)"
+        - "traefik.http.routers.wacrm-app.service=wacrm-app"
+        - "traefik.http.routers.wacrm-app.tls.certresolver=le"
+        - "traefik.http.services.wacrm-app.loadbalancer.server.port=3000"
+        - "traefik.swarm.network=public"
+
+networks:
+  private:
+    external: true
+    name: n644bmtjmopsq99z7tj4qwsr7   # rede privada
+  public:
+    external: true
+    name: yabo3t8xtiuslyge810h0xw82   # rede do Traefik
