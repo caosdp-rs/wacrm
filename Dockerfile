@@ -37,7 +37,11 @@ WORKDIR /app
 # ------------------------------------------------------------
 FROM base AS deps
 COPY package.json package-lock.json ./
-RUN npm ci
+# Prefer the reproducible, lockfile-exact install. Fall back to `npm install`
+# if the committed lockfile has drifted out of sync with package.json
+# (e.g. optional native deps like @emnapi/* resolving to newer patches) so a
+# stale lock doesn't hard-block the deploy.
+RUN npm ci || npm install
 
 # ------------------------------------------------------------
 # builder — compile the app. Needs the NEXT_PUBLIC_* build args.
